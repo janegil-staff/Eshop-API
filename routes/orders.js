@@ -9,6 +9,7 @@ import {
   getOrderCount,
   getUserOrders,
 } from "../controllers/order.controller.js";
+import { createPaymentIntent } from '../controllers/payment.controller.js';
 
 const router = express.Router();
 
@@ -20,5 +21,7 @@ router.get("/:id", getOrder);
 router.post("/", createOrder);
 router.put("/:id", updateOrder);
 router.delete("/:id", deleteOrder);
+
+router.post('/create-payment-intent', createPaymentIntent);
 
 export default router;
