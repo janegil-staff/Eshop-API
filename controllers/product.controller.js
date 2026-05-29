@@ -25,6 +25,7 @@ export const getProduct = async (req, res) => {
   res.send(product);
 };
 export const createProduct = async (req, res) => {
+  console.log(req.file);
   const category = await Category.findById(req.body.category);
   if (!category) return res.status(400).send("Invalid Category");
 
