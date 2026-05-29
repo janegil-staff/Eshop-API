@@ -30,7 +30,7 @@ const storage = new CloudinaryStorage({
     }
     const fileName = file.originalname.split(".")[0].split(" ").join("-");
     return {
-      folder: "qup-store/products",
+      folder: "estore/products",
       format: FILE_TYPE_MAP[file.mimetype],
       public_id: `${fileName}-${Date.now()}`,
     };

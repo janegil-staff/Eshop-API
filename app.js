@@ -12,7 +12,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors());
-app.options("*", cors());
+app.options('/*splat', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
