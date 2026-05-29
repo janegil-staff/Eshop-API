@@ -57,6 +57,18 @@ const productSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  shippingDays: {
+    type: Number,
+    default: 14, // typical dropshipping transit; override per product
+  },
+  supplier: {
+    type: String,
+    default: "", // free-text now; becomes a ref when supplier sync lands
+  },
+  supplierProductId: {
+    type: String,
+    default: "", // maps to the supplier's SKU for future sync
+  },
 });
 
 productSchema.method("toJSON", function () {
