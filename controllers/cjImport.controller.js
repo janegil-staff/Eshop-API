@@ -110,3 +110,70 @@ export const importProduct = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// POST /api/cj/import-batch  body: { pids: [...], multiplier? }
+export const importBatch = async (req, res) => {
+  const { pids, multiplier } = req.body;
+  if (!Array.isArray(pids) || pids.length === 0) {
+    return res.status(400).json({ error: 'pids array is required' });
+  }
+  if (pids.length > 50) {
+    return res.status(400).json({ error: 'Max 50 per batch (rate limits)' });
+  }
+
+  const results = { imported: [], skipped: [], failed: [] };
+
+  for (const pid of pids) {
+    try {
+      const existing = await Product.findOne({ supplierProductId: pid });
+      if (existing) {
+        results.skipped.push({ pid, reason: 'already imported' });
+        continue;
+      }
+
+      const detail = await getCjProductDetail(pid);
+      if (!detail) {
+        results.failed.push({ pid, reason: 'not found' });
+        continue;
+      }
+
+      const cost = parseCjCost(detail.sellPrice);
+      const price = applyMarkup(cost, multiplier || 2.5);
+      const images = collectImages(detail);
+      const category = await resolveCategory(detail.categoryName);
+
+      const product = new Product({
+        name: cleanName(detail),
+        description: detail.productNameEn || cleanName(detail),
+        richDescription: detail.description || detail.remark || '',
+        image: images[0] || '',
+        images: images.slice(1),
+        brand: detail.supplierName || 'CJ',
+        price,
+        category: category._id,
+        countInStock: 999,
+        shippingDays: 14,
+        supplier: 'CJ',
+        supplierProductId: pid,
+      });
+
+      const saved = await product.save();
+      results.imported.push({ pid, id: saved.id, name: saved.name, price });
+
+      // Be gentle with CJ's rate limit — small pause between detail calls.
+      await new Promise((r) => setTimeout(r, 400));
+    } catch (err) {
+      results.failed.push({ pid, reason: err.message });
+    }
+  }
+
+  res.json({
+    ok: true,
+    summary: {
+      imported: results.imported.length,
+      skipped: results.skipped.length,
+      failed: results.failed.length,
+    },
+    ...results,
+  });
+};

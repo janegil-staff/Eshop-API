@@ -35,12 +35,29 @@ export function applyMarkup(costUsd, multiplier) {
   return Math.ceil(raw / 10) * 10 - 1;
 }
 
-// Collect images: detail endpoint usually has productImageSet (array) + productImage.
 export function collectImages(detail) {
   const imgs = [];
+
+  // productImageSet is usually a clean array.
   if (Array.isArray(detail.productImageSet)) imgs.push(...detail.productImageSet);
-  if (detail.productImage && !imgs.includes(detail.productImage)) {
-    imgs.unshift(detail.productImage);
+
+  // productImage may be a real URL, OR a JSON-stringified array of URLs.
+  if (detail.productImage) {
+    let parsed = detail.productImage;
+    if (typeof parsed === 'string' && parsed.trim().startsWith('[')) {
+      try {
+        const arr = JSON.parse(parsed);
+        if (Array.isArray(arr)) {
+          imgs.push(...arr);
+          parsed = null; // already added
+        }
+      } catch {
+        /* leave as-is */
+      }
+    }
+    if (parsed && typeof parsed === 'string') imgs.unshift(parsed);
   }
-  return imgs.filter(Boolean);
+
+  // De-dupe, keep only real http(s) URLs.
+  return [...new Set(imgs)].filter((u) => typeof u === 'string' && u.startsWith('http'));
 }

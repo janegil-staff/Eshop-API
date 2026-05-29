@@ -1,6 +1,6 @@
 import express from 'express';
 import { testCjAuth, listCjProducts } from '../services/cj.service.js';
-import { searchProducts, importProduct } from '../controllers/cjImport.controller.js';
+import { searchProducts, importProduct, importBatch } from '../controllers/cjImport.controller.js';
 
 const router = express.Router();
 
@@ -27,5 +27,6 @@ router.get('/products', async (req, res) => {
 
 router.get('/search', searchProducts);
 router.post('/import', importProduct);
+router.post('/import-batch', importBatch);
 
 export default router;
